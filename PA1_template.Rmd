@@ -1,25 +1,70 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "assignment"
+author: "swimbait"
+date: "May 1, 2020"
+output: html_document
 ---
 
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## Loading and preprocessing the data
-
-
-
+```{r echo=TRUE}
+activity<-read.csv("activity.csv")
+head(activity)
+tail(activity)
+```
 ## What is mean total number of steps taken per day?
+```{r echo=TRUE}
+stepSumByDay<-tapply(activity$steps,activity$date,FUN=function(x) sum(x, na.rm=T))
+meanStepsPerDay<-round(mean(stepSumByDay),0)
+medianStepsPerDay<-round(median(stepSumByDay),0)
+hist(stepSumByDay)
+```
 
-
+The mean steps per day is `r round(meanStepsPerDay,0)` and the median steps per day is `r round(medianStepsPerDay,0)`.
 
 ## What is the average daily activity pattern?
+```{r echo=TRUE}
+meanStepsByInterval<-tapply(activity$steps,activity$interval,FUN=function(x) mean(x,na.rm=T))
+plot(names(meanStepsByInterval), meanStepsByInterval,type="l", xlab="Within-Day Interval")
+maxInterval<-names(meanStepsByInterval)[which(meanStepsByInterval==max(meanStepsByInterval))]
+```
 
-
+The interval which contains the most steps per day is `r maxInterval`
 
 ## Imputing missing values
+```{r echo=TRUE}
+missingSteps<-which(is.na(activity$steps))
+meanStepsByIntervalFrame<-data.frame(cbind(interval=names(meanStepsByInterval),meanSteps=round(meanStepsByInterval,0)))
+missingStepsActivity<-activity[missingSteps,]
+activityImputed<-merge(activity, meanStepsByIntervalFrame,by="interval",all.y=F)
+activityImputed<-activityImputed[order(activityImputed$date,activityImputed$interval),]
+activityImputed$imputedSteps<-ifelse(is.na(activityImputed$steps),as.numeric(as.vector(activityImputed$meanSteps)),activityImputed$steps)
+stepSumByDay2<-tapply(activityImputed$imputedSteps,activityImputed$date,FUN=function(x) sum(x, na.rm=T))
+meanStepsPerDay2<-round(mean(stepSumByDay2),0)
+medianStepsPerDay2<-round(median(stepSumByDay2),0)
+hist(stepSumByDay2)
 
+```
 
+Missing step data are imputed by with the mean value for that within-day interval across all days in the data.  
+
+The total amount of within date intervals with missing values on steps is `r sum(is.na(activity$steps))`.
+The mean steps per day is `r round(meanStepsPerDay2,0)` and the median steps per day is `r round(medianStepsPerDay2,0)`.
+
+The imputed missing values has a large impact on the mean but not as strong of an impact on the median.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r echo=TRUE}
+activityImputed$dayOfWeek<-weekdays(as.Date(activityImputed$date))
+activityImputed$dayType<-as.factor(ifelse(activityImputed$dayOfWeek %in% c("Sunday","Saturday"),"Weekend","Weekday"))
+dayType<-activityImputed$dayType=="Weekend"
+meanStepsByIntervalWeekend<-tapply(activityImputed$steps[dayType],activity$interval[dayType],FUN=function(x) mean(x,na.rm=T))
+meanStepsByIntervalWeekday<-tapply(activityImputed$steps[!dayType],activity$interval[!dayType],FUN=function(x) mean(x,na.rm=T))
+plot(names(meanStepsByIntervalWeekend), meanStepsByIntervalWeekend,type="l", xlab="Within-Day Interval",lwd=1.5)
+lines(names(meanStepsByIntervalWeekday), meanStepsByIntervalWeekday,col="red")
+```
+
+Weekend average steps by interval is in black and weekday is red

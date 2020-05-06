@@ -3,6 +3,7 @@ title: "assignment"
 author: "swimbait"
 date: "May 1, 2020"
 output: html_document
+keep_md: true
 ---
 
 ```{r setup, include=TRUE}

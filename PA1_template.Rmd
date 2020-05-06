@@ -8,6 +8,7 @@ keep_md: true
 
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.path="./figure")
 ```
 
 ## Loading and preprocessing the data
